@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>销售管理系统</title>
+    <link rel="stylesheet" href="../lib/layui-v2.5.5/css/layui.css" media="all">
+    <script>
+        var goodsList = [];//待提交的商品列表信息
+        var allgoodslist = [];
+        var wh_List = [];
+        var selectedgoods;
+        var src_selectedwh;
+        var dest_selectedwh;
+    </script>
+    <script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <script src="../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+    <script src="../lib/jq-module/jquery.particleground.min.js" charset="utf-8"></script>
+    <script>
+        $.ajax({
+            type: "POST",
+            url: '/goods/goodsList',  //从数据库查询返回的是个list
+            dataType: "json",
+            data: {
+                "page": 1,
+                "limit": 100
+            },
+            async: false,
+            cache: false,
+            success: function (data) {
+                allgoodslist = data.data;
+            }
+        })
+    </script>
+    <script>
+        $.ajax({
+            type: "POST",
+            url: '/warehouse/warehouseList',  //从数据库查询返回的是个list
+            dataType: "json",
+            async: false,
+            cache: false,
+            success: function (data) {
+                wh_List = data.data;
+            }
+        })
+    </script>
+</head>
+
+<body>
+
+    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+        <legend>调拨货品</legend>
+    </fieldset>
+
+    <form class="layui-form" type="form" action="">
+        <div class="layui-form-item">
+            <label class="layui-form-label">调拨货品</label>
+            <div class="layui-input-block">
+                <select id="gName" name="gName" lay-verify="required" lay-search lay-filter="gn" class="select">
+                    <option value=""></option>
+                </select>
+            </div>
+        </div>
+        <script>
+            var len = allgoodslist.length;
+            for (var i = 0; i < len; i++) {
+                $('#gName').append(new Option(allgoodslist[i].goodsName, i));
+            }
+        </script>
+        <div class="layui-form-item">
+            <label class="layui-form-label">转移仓库</label>
+            <div class="layui-input-block">
+                <select id="src_whList" name="src_whList" lay-verify="required" lay-search lay-filter="swhl"
+                    class="select">
+                    <option value=""></option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">目的仓库</label>
+            <div class="layui-input-block">
+                <select id="dest_whList" name="dest_whList" lay-verify="required" lay-search lay-filter="dwhl"
+                    class="select">
+                    <option value=""></option>
+                </select>
+            </div>
+        </div>
+        <script>
+            var len = wh_List.length;
+            for (var i = 0; i < len; i++) {
+                $('#src_whList').append(new Option(wh_List[i].warehouseId, wh_List[i].warehouseId));
+                $('#dest_whList').append(new Option(wh_List[i].warehouseId, wh_List[i].warehouseId));
+            }
+        </script>
+        <br>
+        <div class="layui-form-item">
+            <label class="layui-form-label">数量</label>
+            <div class="layui-input-block">
+                <input type="text" onkeyup="this.value=this.value.replace(/[^\d]/g,'')"
+                    onafterpaste="this.value=this.value.replace(/[^\d]/g,'') " name="inpNumber" lay-verify="required"
+                    autocomplete="off" placeholder="请输入调拨商品的数量" class="layui-input">
+            </div>
+        </div>
+        <br>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="submit" class="layui-btn" lay-submit="" lay-filter="confirmtransfer"
+                    id="confirmtransfer">确认调拨商品</button>
+                <button type="reset" class="layui-btn layui-btn-primary" id="reset">重置</button>
+            </div>
+        </div>
+    </form>
+
+    <script>
+        layui.use('form', function () {
+
+            var form = layui.form;
+
+            form.on('select(gn)', function (data) {
+                selectedgoods = allgoodslist[data.value];
+                form.render('select');
+            });
+
+            form.on('select(swhl)', function (data) {
+                src_selectedwh = data.value;
+                form.render('select');
+            });
+
+            form.on('select(dwhl)', function (data) {
+                dest_selectedwh = data.value;
+                form.render('select');
+            });
+
+            form.on('submit(confirmtransfer)', function (data) {
+                var info = data.field;
+                if (src_selectedwh == dest_selectedwh) {
+                    layer.msg('错误：转移仓库与目的仓库相同', { icon: 2 });
+                    return false;
+                }
+                console.log(allgoodslist[info.gName].goodsId);
+                console.log(info.src_whList);
+                console.log(info.dest_whList);
+                console.log(info.inpNumber);
+                $.ajax({
+                    async: true,
+                    type: 'post',
+                    url: '/warehouse/transfer',
+                    dataType: "json",
+                    data: {
+                        "goodsId": allgoodslist[info.gName].goodsId,
+                        "src_whId": info.src_whList,
+                        "dest_whId": info.dest_whList,
+                        "num": info.inpNumber
+                    },
+                    success: function (flag) {
+                        if (flag) {
+                            alert("调拨成功！");
+                            location.reload();
+                        } else {
+                            alert("错误，调拨的货品数目超过转移仓库的存量");
+                        }
+                    },
+                    error: function () {
+                        alert("错误！");
+                    }
+                });
+                return false;
+            });
+        });
+
+        // $("#formDemo").click(function () {
+        //     var len = goodsList.length;
+        //     var addGoodsList = "";
+        //     console.log(JSON.stringify(goodsList));
+        //     for (var i = 0; i < len; i++) {
+        //         addGoodsList += goodsList[i].whid + "-" + goodsList[i].id + "-" + goodsList[i].num;
+        //         if (i != len - 1) {
+        //             addGoodsList += "-";
+        //         }
+        //     }
+        //     console.log(addGoodsList);
+        //     $.ajax({
+        //         type: "POST",
+        //         url: '/warehouse/stock',  //从数据库查询返回的是个list
+        //         dataType: "json",
+        //         async: false,
+        //         cache: false,
+        //         data: {
+        //             "stock_list": addGoodsList
+        //         },
+        //         success: function (data) {
+        //             if (data) {
+        //                 layer.msg("进货成功", { icon: 1 });
+        //             }
+        //             else {
+        //                 layer.msg("进货失败", { icon: 2 });
+        //             }
+        //         }
+
+        //     })
+        //     return false;
+        // });
+
+
+    </script>
+
+
+</body>
+
+</html>

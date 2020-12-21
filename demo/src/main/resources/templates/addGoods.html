@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>销售管理系统</title>
+    <link rel="stylesheet" href="../lib/layui-v2.5.5/css/layui.css" media="all">
+</head>
+<body>
+
+<fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+    <legend>添加商品</legend>
+</fieldset>
+
+<form class="layui-form" action="">
+    <div class="layui-form-item">
+        <label class="layui-form-label">商品名称</label>
+        <div class="layui-input-block">
+            <input type="text" name="goodsName" lay-verify="required" autocomplete="off" placeholder="请输入商品名称" class="layui-input">
+        </div>
+    </div>
+    <br>
+    <div class="layui-form-item">
+        <label class="layui-form-label">进价</label>
+        <div class="layui-input-block">
+            <input type="text" name="priceIn" lay-verify="required" autocomplete="off" placeholder="请输入进价" class="layui-input">
+        </div>
+    </div>
+    <br>
+    <div class="layui-form-item">
+        <label class="layui-form-label">批发价</label>
+        <div class="layui-input-block">
+            <input type="text" name="priceWholesale" lay-verify="required" autocomplete="off" placeholder="请输入批发价" class="layui-input">
+        </div>
+    </div>
+    <br>
+    <div class="layui-form-item">
+        <label class="layui-form-label">零售价</label>
+        <div class="layui-input-block">
+            <input type="text" name="priceRetail" lay-verify="required" autocomplete="off" placeholder="请输入零售价" class="layui-input">
+        </div>
+    </div>
+    <br>
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button type="submit" class="layui-btn" lay-submit="" lay-filter="demo1">立即提交</button>
+            <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+        </div>
+    </div>
+</form>
+
+<script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+<script src="../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+<script src="../lib/jq-module/jquery.particleground.min.js" charset="utf-8"></script>
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+<script>
+    layui.use(['form'], function(){
+        var form = layui.form
+            ,layer = layui.layer
+
+        //监听提交
+        form.on('submit(demo1)', function(data){
+            data = data.field;
+            var goodsName = data.goodsName;
+            var priceIn = data.priceIn;
+            var priceWholesale = data.priceWholesale;
+            var priceRetail = data.priceRetail;
+            $.ajax({
+                async:false,
+                type: 'GET',
+                url: '/goods/add',
+                dataType: 'json',
+                data: {goodsName: goodsName, priceIn: priceIn, priceWholesale: priceWholesale,priceRetail:priceRetail},
+                success:function (flag) {
+                    if(flag){
+                        alert("添加成功！");
+                        location.reload();
+                    } else {
+                        alert("添加失败！")
+                    }
+                },
+                error:function () {
+                    alert("添加错误！");
+                }
+            });
+            return false;
+        });
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>销售管理系统</title>
+    <link rel="stylesheet" href="../lib/layui-v2.5.5/css/layui.css" media="all">
+    <script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <script>
+        function change(title) {
+            $('iframe').attr('src', title + ".html");
+        }
+    </script>
+</head>
+
+<body class="layui-layout-body">
+    <div class="layui-layout layui-layout-admin">
+        <div class="layui-header">
+            <div class="layui-logo">商品信息管理系统</div>
+            <!-- 头部区域（可配合layui已有的水平导航） -->
+            <ul class="layui-nav layui-layout-right">
+                <img src="//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg"
+                    class="layui-nav-img">
+                <li class="layui-nav-item"><a href="signin.html">退出登录</a></li>
+            </ul>
+        </div>
+
+        <div class="layui-side layui-bg-black">
+            <div class="layui-side-scroll">
+                <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+                <ul class="layui-nav layui-nav-tree" lay-filter="test">
+                    <li class="layui-nav-item layui-nav-itemed">
+                        <a class="" href="javascript:;">所有商品</a>
+                        <dl class="layui-nav-child">
+                            <dd class="layui-this"><a href="javascript:;" onclick="change('goodsList')">商品列表</a></dd>
+                            <dd><a href="javascript:;" onclick="change('addGoods')">添加商品</a></dd>
+                            <dd><a href="javascript:;" onclick="change('searchGoods')">查询商品</a></dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item">
+                        <a class="" href="javascript:;">客户信息</a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="javascript:;" onclick="change('customerList')">客户列表</a></dd>
+                            <dd><a href="javascript:;" onclick="change('addCustomer')">添加客户</a></dd>
+                            <dd><a href="javascript:;" onclick="change('searchCustomer')">查询客户</a></dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item">
+                        <a class="" href="javascript:;">业务管理</a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="javascript:;" onclick="change('placeOrder')">下单</a></dd>
+                            <dd><a href="javascript:;" onclick="change('checkOrder')">审核订单</a></dd>
+                            <dd><a href="javascript:;" onclick="change('orderList')">查询订单</a></dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item">
+                        <a class="" href="javascript:;">库存管理</a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="javascript:;" onclick="change('warehouseList')">库存列表</a></dd>
+                            <dd><a href="javascript:;" onclick="change('stock')">进货</a></dd>
+                            <dd><a href="javascript:;" onclick="change('transfer')">调拨货品</a></dd>
+                            <dd><a href="javascript:;" onclick="change('goodsList')">库存记录</a></dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item">
+                        <a class="" href="javascript:;" onclick="change('turnover')">收银台</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="layui-body">
+            <!-- 内容主体区域 -->
+            <div style="padding: 15px;">
+                <iframe src="goodsList.html" frameborder="0" id="demoAdmin"
+                    style="width: 100%; height: 600px;"></iframe>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+    <script src="../lib/jq-module/jquery.particleground.min.js" charset="utf-8"></script>
+    <script>
+        //JavaScript代码区域
+        layui.use('element', function () {
+            var element = layui.element;
+
+        });
+    </script>
+</body>
+
+</html>

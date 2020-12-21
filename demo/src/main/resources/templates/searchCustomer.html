@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>销售管理系统</title>
+    <link rel="stylesheet" href="../lib/layui-v2.5.5/css/layui.css" media="all">
+</head>
+<body>
+
+<div class="demoTable">
+    客户名：
+    <div class="layui-inline">
+        <input class="layui-input" name="customerName" id="demoReload" autocomplete="off">
+    </div>
+    <button class="layui-btn" data-type="reload">搜索</button>
+</div>
+
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckData">获取选中行数据</button>
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button>
+        <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button>
+    </div>
+</script>
+
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<table class="layui-hide" id="test" lay-filter="test"></table>
+
+<script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+<script src="../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+<script src="../lib/jq-module/jquery.particleground.min.js" charset="utf-8"></script>
+<!-- 注意：如果你直接复制所有代码到本地，上述js路径需要改成你本地的 -->
+<script>
+    layui.use('table', function(){
+        var table = layui.table;
+
+        //方法级渲染
+        table.render({
+            elem: '#test'
+            ,url: '/customer/searchCustomer'
+            , toolbar: '#toolbarDemo'
+            , title: '客户数据表'
+            , cols: [[
+                {type: 'checkbox', fixed: 'left'}
+                , {field: 'customerId', title: 'ID', width: 200, fixed: 'left', sort: true}
+                , {field: 'customerName', title: '名称', width: 300}
+                , {field: 'tel', title: '手机号', width: 300}
+                , {field: 'type', title: '类型', width: 300, sort: true}
+                , {fixed: 'right', title: '操作', toolbar: '#barDemo', width: 150}
+            ]]
+            ,id: 'testReload'
+            ,page: true
+        });
+
+        var $ = layui.$, active = {
+            reload: function(){
+                var demoReload = $('#demoReload').val();
+
+                //执行重载
+                table.reload('testReload', {
+                    method:'post'
+                    ,page: {
+                        curr: 1 //重新从第 1 页开始
+                    }
+                    ,where: {customerName: demoReload}
+                });
+            }
+        };
+
+        $('.demoTable .layui-btn').on('click', function(){
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+
+        //监听工具条
+        table.on('tool(test)', function (obj) {
+            layer.confirm('真的删除么', function (index) {
+                obj.del();
+                layer.close(index);
+            });
+        });
+
+        //工具栏事件
+        table.on('toolbar(test)', function (obj) {
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch (obj.event) {
+                case 'getCheckData':
+                    var data = checkStatus.data;
+                    layer.alert(JSON.stringify(data));
+                    break;
+                case 'getCheckLength':
+                    var data = checkStatus.data;
+                    layer.msg('选中了：' + data.length + ' 个');
+                    break;
+                case 'isAll':
+                    layer.msg(checkStatus.isAll ? '全选' : '未全选')
+                    break;
+            }
+            ;
+        });
+
+    });
+</script>
+
+</body>
+</html>

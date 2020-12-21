@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>销售管理系统</title>
+    <link rel="stylesheet" href="../lib/layui-v2.5.5/css/layui.css" media="all">
+    <script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <script src="../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+    <script src="../lib/jq-module/jquery.particleground.min.js" charset="utf-8"></script>
+    <script>
+        var orderList = [];
+        var srcorderList = [];
+        var profit = 0;
+    </script>
+    <script>
+        function loadinfo() {
+            orderList = [];
+            srcorderList = [];
+            $.ajax({
+                type: "POST",
+                url: '/order/orderList',  //从数据库查询返回的是个list
+                dataType: "json",
+                async: false,
+                cache: false,
+                success: function (data) {
+                    srcorderList = data;
+                }
+            })
+            var len = srcorderList.length;
+            orderList = srcorderList.slice(0, len);
+            for (var i = 0; i < len; i++) {
+                if (orderList[i].status - 2 >= 0)
+                    orderList[i].check = "已审核";
+                else
+                    orderList[i].check = "未审核";
+                if (orderList[i].status % 2 == 0)
+                    orderList[i].status = "批发";
+                else if (orderList[i].status % 2 == 1)
+                    orderList[i].status = "零售";
+            }
+        }
+        loadinfo();
+    </script>
+    <script>
+        function loadtable() {
+            layui.use('table', function () {
+                var table = layui.table;
+                //第一个实例
+                table.render({
+                    elem: '#test'
+                    , toolbar: '#toolbarDemo'
+                    , title: '订单数据表'
+                    , totalRow: true
+                    , data: orderList
+                    , cols: [[
+                        { type: 'checkbox', fixed: 'left' }
+                        , { field: 'orderId', title: '订单ID', fixed: 'left', sort: true }
+                        , { field: 'customerId', title: '客户ID', }
+                        , { field: 'price', title: '订单金额', sort: true }
+                        , { field: 'status', title: '订单类型', sort: true }
+                        , { field: 'check', title: '审核状态', sort: true }
+                        , { field: 'warehouseId', title: '出货仓库', sort: true }
+                        , { field: 'createTime', title: '创建时间', sort: true }
+                    ]]
+                });
+            });
+        }
+        loadtable();
+    </script>
+    <script>
+        $.ajax({
+            type: "POST",
+            url: '/order/profit',
+            dataType: "json",
+            async: false,
+            cache: false,
+            success: function (data) {
+                profit = data;
+            }
+        })
+    </script>
+</head>
+
+<body>
+
+    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+        <legend>查看业绩</legend>
+    </fieldset>
+
+    <div class="layui-card">
+        <div class="layui-card-header">本月业绩统计</div>
+        <div class="layui-card-body layui-text">
+            <table class="layui-table">
+                <colgroup>
+                    <col width="200">
+                    <col>
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <td>本月销售订单数量</td>
+                        <td id="tdfirst">
+                        </td>
+                        <script>
+                            console.log(JSON.stringify(srcorderList));
+                            var num = 0;
+                            var len = srcorderList.length;
+                            for (var i = 0; i < len; i++) {
+                                if (srcorderList[i].check == "已审核")
+                                    num++
+                            }
+                            document.getElementById("tdfirst").innerHTML = num;
+                        </script>
+                    </tr>
+                    <tr>
+                        <td>订单总金额</td>
+                        <td id="tdsecond"></td>
+                        <script>
+                            var totalprice = 0;
+                            var len = srcorderList.length;
+                            for (var i = 0; i < len; i++) {
+                                if (srcorderList[i].check == "已审核")
+                                    totalprice += srcorderList[i].price;
+                            }
+                            document.getElementById("tdsecond").innerHTML = totalprice;
+                        </script>
+                    </tr>
+                    <tr>
+                        <td>销售利润</td>
+                        <td id="tdthird"></td>
+                        <script>
+                            document.getElementById("tdthird").innerHTML = profit;
+                        </script>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <table class="layui-hide" id="test" lay-filter="test"></table>
+
+    <script type="text/html" id="toolbarDemo">
+        <div class="layui-btn-container">
+            <button class="layui-btn layui-btn-sm" lay-event="getCheckData">获取选中行数据</button>
+            <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button>
+        </div>
+    </script>
+
+    <script>
+        layui.use(['table', 'form'], function () {
+            var table = layui.table;
+            var form = layui.form;
+            //工具栏事件
+            table.on('toolbar(test)', function (obj) {
+                var checkStatus = table.checkStatus(obj.config.id);
+                switch (obj.event) {
+                    case 'getCheckData':
+                        var data = checkStatus.data;
+                        layer.alert(JSON.stringify(data));
+                        break;
+                    case 'getCheckLength':
+                        var data = checkStatus.data;
+                        layer.msg('选中了：' + data.length + ' 个');
+
+                        $.ajax({
+                            async: true,
+                            type: 'post',
+                            url: '/order/check',
+                            contentType: "application/json",
+                            data: JSON.stringify(data),
+                            dataType: "json",
+                            success: function (flag) {
+                                if (flag) {
+                                    alert("成功！");
+                                    location.reload();
+                                } else {
+                                    alert("失败！")
+                                }
+                            },
+                            error: function () {
+                                alert("添加错误！");
+                            }
+                        });
+                        return false;
+                        break;
+                };
+            });
+
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>销售管理系统</title>
+    <link rel="stylesheet" href="../lib/layui-v2.5.5/css/layui.css" media="all">
+    <script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <script src="../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+    <script src="../lib/jq-module/jquery.particleground.min.js" charset="utf-8"></script>
+    <script>
+        var orderList = [];
+    </script>
+    <script>
+        $.ajax({
+            type: "POST",
+            url: '/order/getUncheckList',  //从数据库查询返回的是个list
+            dataType: "json",
+            data: {
+                "page": 1,
+                "limit": 100
+            },
+            async: false,
+            cache: false,
+            success: function (data) {
+                orderList = data;
+            }
+        })
+        var len = orderList.length;
+        for (var i = 0; i < len; i++) {
+            if (orderList[i].status == 0)
+                orderList[i].status = "批发";
+            if (orderList[i].status == 1)
+                orderList[i].status = "零售";
+        }
+    </script>
+    <script>
+        function loadtable() {
+            layui.use('table', function () {
+                var table = layui.table;
+                //第一个实例
+                table.render({
+                    elem: '#test'
+                    , toolbar: '#toolbarDemo'
+                    , title: '商品数据表'
+                    , totalRow: true
+                    , data: orderList
+                    , cols: [[
+                        { type: 'checkbox', fixed: 'left' }
+                        , { field: 'orderId', title: '订单ID', fixed: 'left', sort: true }
+                        , { field: 'customerId', title: '客户ID', }
+                        , { field: 'price', title: '订单金额', sort: true }
+                        , { field: 'status', title: '订单类型', sort: true }
+                        , { field: 'warehouseId', title: '出货仓库', sort: true }
+                        , { field: 'createTime', title: '创建时间', sort: true }
+                    ]]
+                });
+            });
+        }
+        loadtable();
+    </script>
+</head>
+
+<body>
+    <table class="layui-hide" id="test" lay-filter="test"></table>
+
+    <script type="text/html" id="toolbarDemo">
+        <div class="layui-btn-container">
+            <button class="layui-btn layui-btn-sm" lay-event="getCheckData">获取选中行数据</button>
+            <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button>
+            <button class="layui-btn layui-btn-sm layui-btn-normal" lay-event="submit">提交审核</button>
+        </div>
+    </script>
+
+    <script>
+        layui.use(['table', 'form'], function () {
+            var table = layui.table;
+            var form = layui.form;
+            //工具栏事件
+            table.on('toolbar(test)', function (obj) {
+                var checkStatus = table.checkStatus(obj.config.id);
+                switch (obj.event) {
+                    case 'getCheckData':
+                        var data = checkStatus.data;
+                        layer.alert(JSON.stringify(data));
+                        break;
+                    case 'getCheckLength':
+                        var data = checkStatus.data;
+                        layer.msg('选中了：' + data.length + ' 个');
+                        break;
+                    case 'submit':
+                        var data = checkStatus.data;
+                        var len = data.length;
+                        for (var i = 0; i < len; i++) {
+                            if (data[i].status == "零售") {
+                                data[i].status = 1;
+                            }
+                            if (data[i].status == "批发") {
+                                data[i].status = 0;
+                            }
+                        }
+
+                        $.ajax({
+                            async: true,
+                            type: 'post',
+                            url: '/order/check',
+                            contentType: "application/json",
+                            data: JSON.stringify(data),
+                            dataType: "json",
+                            success: function (flag) {
+                                if (flag) {
+                                    alert("成功！");
+                                    location.reload();
+                                } else {
+                                    alert("失败！")
+                                }
+                            },
+                            error: function () {
+                                alert("添加错误！");
+                            }
+                        });
+                        return false;
+                        break;
+                }
+                ;
+            });
+
+        });
+    </script>
+
+</body>
+
+</html>
