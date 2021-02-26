@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>开销售单</title>
+    <link rel="stylesheet" href="../lib/layui-v2.5.5/css/layui.css" media="all">
+
+    <script>
+        var goodsList = [];//待提交的商品列表信息
+        var whGoodsList = [];
+        var selectedWarehouse = -1;
+        var selectedgood = -1;
+        var warehouseList = []
+        var customerList = [];
+    </script>
+    <script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <script src="../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+    <script src="../lib/jq-module/jquery.particleground.min.js" charset="utf-8"></script>
+    <script>
+        function loaddemo() {
+            layui.use('table', function () {
+                var table = layui.table;
+                //第一个实例
+                table.render({
+                    elem: '#demo'
+                    , height: 200
+                    , width: 500
+                    /*,url: '/demo/table/user/' //数据接口*/
+                    , page: true //开启分页
+                    , cols: [[ //表头
+                        { field: 'id', title: '货物ID', sort: true, fixed: 'left' }
+                        , { field: 'name', title: '货物名称', fixed: 'left' }
+                        , { field: 'price', title: '货品单价', fixed: 'left' }
+                        , { field: 'num', title: '数量', fixed: 'left' }
+                    ]]
+                    , data: goodsList
+                });
+            });
+        }
+        loaddemo();
+        function loadwhGoodsList() {
+            layui.use('table', function () {
+                var table = layui.table;
+                //第一个实例
+                table.render({
+                    elem: '#whGoodsList'
+                    , height: 400
+                    , width: 500
+                    /*,url: '/demo/table/user/' //数据接口*/
+                    , page: true //开启分页
+                    , cols: [[ //表头
+                        { field: 'id', title: '货物ID', sort: true, fixed: 'left' }
+                        , { field: 'name', title: '货物名称', fixed: 'left' }
+                        , { field: 'price', title: '货品单价', fixed: 'left' }
+                        , { field: 'num', title: '数量', fixed: 'left' }
+                    ]]
+                    , data: whGoodsList
+                });
+            });
+        }
+        loadwhGoodsList();
+    </script>
+    <script>
+        $.ajax({
+            type: "POST",
+            url: '/warehouse/warehouseList',  //从数据库查询返回的是个list
+            dataType: "json",
+            async: false,
+            cache: false,
+            success: function (data) {
+                warehouseList = data.data;
+            }
+        })
+        $.ajax({
+            type: "POST",
+            url: '/customer/customerList',
+            dataType: "json",
+            data: {
+                "page": 1,
+                "limit": 100
+            },
+            async: false,
+            cache: false,
+            success: function (data) {
+                customerList = data.data;
+            }
+        })
+    </script>
+
+</head>
+
+<body>
+
+    <div class="layui-col-md6">
+        <form class="layui-form" action="" lay-filter="add">
+
+            <div class="layui-card">
+                <div class="layui-card-header">开销售单</div>
+                <div class="layui-card-body">
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">仓库id</label>
+                        <div class="layui-input-block">
+                            <select id="whList" name="whList" lay-verify="required" lay-search lay-filter="whl"
+                                class="select">
+                                <option value=""></option>
+                            </select>
+                        </div>
+                    </div>
+                    <script>
+                        var len = warehouseList.length;
+                        for (var i = 0; i < len; i++) {
+                            $('#whList').append(new Option(warehouseList[i].warehouseId, warehouseList[i].warehouseId));
+                        }
+                    </script>
+
+                    <div class="layui-form-item">
+                        <div class="layui-card">
+                            <div class=layui-card-body>
+                                <table id="whGoodsList" lay-filter="whgl"></table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="layui-col-md6">
+
+        <form class="layui-form" type="form" action="" id="goodsForm" lay-filter="goods">
+            <div class="layui-card">
+                <div class="layui-card-header">添加购买货品</div>
+                <div class="layui-card-body">
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">货品名称</label>
+                        <div class="layui-input-block">
+                            <select id="gName" name="gName" lay-verify="required" lay-search lay-filter="gn"
+                                class="select">
+                                <option value=""></option>
+                            </select>
+                        </div>
+                    </div>
+                    <script>
+                        function loadgName() {
+                            $('#gName').empty();
+                            var whgl_length = whGoodsList.length;
+                            for (var i = 0; i < whgl_length; i++) {
+                                $('#gName').append(new Option(whGoodsList[i].name, i));
+                            }
+                        }
+                    </script>
+
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">数量</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="num" required lay-verify="required|number" placeholder="请输入数量"
+                                autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <button class="layui-btn" lay-submit lay-filter="submit">添加</button>
+                        <button type="reset" class="layui-btn" id="reset">重置</button>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <div class="layui-card">
+                            <div class=layui-card-body>
+                                <table id="demo" lay-filter="test"></table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </form>
+
+        <form class="layui-form" type="form" action="" id="orderForm" lay-filter="order" target="test">
+            <div class="layui-form-item">
+                <label class="layui-form-label">选择客户</label>
+
+                <!-- <input type="text" name="costomerid" required lay-verify="required|number" placeholder="请输入客户id"
+                        autocomplete="off" class="layui-input"> -->
+                <div class="layui-input-block">
+                    <select id="customerName" name="customerName" lay-verify="required" lay-search lay-filter="cn"
+                        class="select">
+                        <option value=""></option>
+                    </select>
+                </div>
+
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit lay-filter="formDemo">立即提交</button>
+                    <button type="button" class="layui-btn layui-btn-primary" id="resetdemo">重置</button>
+                </div>
+            </div>
+        </form>
+
+        <script>
+            $('#customerName').empty();
+            var len = customerList.length;
+            for (var i = 0; i < len; i++) {
+                $('#customerName').append(new Option(customerList[i].customerName, customerList[i].customerName));
+            }
+
+        </script>
+        <!-- <iframe name="test" style="display:none"></iframe> -->
+
+    </div>
+    <script>
+
+        function contains(arr, id) {
+            var i = arr.length;
+            while (i--) {
+                console.log("arr[i] = " + arr[i].id);
+                if (arr[i].id == id) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function setnum(arr, id, num) {
+            var i = arr.length;
+            while (i--) {
+                if (arr[i].id == id) {
+                    arr[i].num = (parseInt(arr[i].num) + parseInt(num));
+                    if (arr[i].num > selectedgood.num) {
+                        layer.msg("超出库存上限");
+                        arr[i].num -= num;
+                        return false;
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+
+        //Demo
+        layui.use('form', function () {
+
+            var form = layui.form;
+
+            form.render();
+
+            //监听提交
+            form.on('submit(formDemo)', function (data) {
+                var selectedCustomerName = data.field.customerName;
+                if (selectedCustomerName == 'undefined') {
+                    selectedCustomerName = "零售客户";
+                }
+
+                var lenofcuslist = customerList.length;
+                var selectedCustomerId = 1;
+                for (var i = 0; i < lenofcuslist; i++) {
+                    if (customerList[i].customerName == selectedCustomerName) {
+                        selectedCustomerId = customerList[i].customerId;
+                        break;
+                    }
+                }
+
+                console.log("data.field =" + JSON.stringify(data.field));
+                console.log("selectedCustomerName = " + selectedCustomerName);
+                console.log("selectedCustomerId = " + selectedCustomerId);
+                var templen = goodsList.length;
+                var goods_list = "";
+                for (var i = 0; i < templen; i++) {
+                    if (i != 0)
+                        goods_list += "-";
+                    goods_list += goodsList[i].id;
+                    goods_list += "-";
+                    goods_list += goodsList[i].num;
+                }
+
+
+                $.ajax({
+                    type: "POST",
+                    url: '/order/add',  //从数据库查询返回的是个list
+                    dataType: "json",
+                    async: false,
+                    cache: false,
+                    data: {
+                        "goods_list": goods_list,
+                        "warehouse_id": selectedWarehouse,
+                        "customer_id": selectedCustomerId
+                    },
+                    success: function (data) {
+                        if (data) {
+                            layer.msg("成功添加订单，请等待审核", { icon: 1 });
+                        }
+                        else {
+                            layer.msg("添加订单失败", { icon: 2 });
+                        }
+                    },
+                    error: function () {
+                        alert("无效的客户id！");
+                    }
+
+                })
+                return false;
+            });
+
+
+
+            form.on('submit(submit)', function (data) {
+
+                if (selectedgood == -1) {
+                    layer.msg("错误！！！尚未选择货品");
+                }
+
+                var d = JSON.stringify(data.field);
+                var dd = JSON.parse(d);
+                if (selectedgood.num < dd.num) {
+                    layer.msg("错误！！！超出库存上限");
+                    return false;
+                }
+                var is = contains(goodsList, selectedgood.id)
+                if (is) {
+                    setnum(goodsList, selectedgood.id, dd.num)
+                }
+                else {
+                    var tempobj = Object.create(selectedgood);
+                    tempobj.num = dd.num;
+                    goodsList.push(tempobj);
+                }
+                var table = layui.table;
+                loaddemo();
+                document.getElementById('reset').click();
+                selectedgood = whGoodsList[0];
+                return false;
+            });
+
+        });
+
+        layui.use('table', function () {
+            var table = layui.table;
+
+            $("#resetdemo").click(function () {
+                goodsList = [];
+                loaddemo();
+            });
+
+        });
+
+
+        layui.use(['form', 'table'], function () {
+            var form = layui.form;
+            var table = layui.table;
+            form.on('select(whl)', function (data) {
+
+                selectedWarehouse = data.value;
+                console.log(JSON.stringify(selectedWarehouse));
+                if (selectedWarehouse != -1) {
+                    $.ajax({
+                        type: "GET",
+                        url: '/warehouse/goodsList',  //从数据库查询返回的是个list
+                        dataType: "json",
+                        data: {
+                            "warehouseId": selectedWarehouse
+                        },
+                        async: false,
+                        cache: false,
+                        success: function (data) {
+                            whGoodsList = [];
+                            $.each(data.data, function (index, item) {
+                                var goodVOobj = { "id": item.goodsId, "name": item.goodsName, "price": item.priceRetail, "num": item.quantityInWh };
+                                whGoodsList.push(goodVOobj);
+                            });
+                            selectedgood = whGoodsList[0];
+                            loadwhGoodsList();
+                        }
+                    })
+                }
+                loadgName();
+                form.render();
+            });
+        });
+
+        layui.use(['form'], function () {
+            var form = layui.form;
+            form.on('select(gn)', function (data) {
+                // $('#gName').empty();
+                // var whgl_length = whGoodsList.length;
+                // for (var i = 0; i < whgl_length; i++) {
+                //     $('#gName').append(new Option(whGoodsList[i].name, whGoodsList[i].id));
+                // }
+                // form.render();
+                selectedgood = whGoodsList[data.value];
+            });
+        })
+
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>销售管理系统</title>
+    <link rel="stylesheet" href="../lib/layui-v2.5.5/css/layui.css" media="all">
+    <script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <script src="../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+    <script src="../lib/jq-module/jquery.particleground.min.js" charset="utf-8"></script>
+</head>
+
+<body>
+
+    <table class="layui-hide" id="test" lay-filter="test"></table>
+
+    <script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckData">获取选中行数据</button>
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button>
+        <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button>
+    </div>
+</script>
+    <script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+    <script>
+        layui.use('table', function () {
+            var table = layui.table;
+
+            table.render({
+                elem: '#test'
+                , url: '/goods/goodsList'
+                , toolbar: '#toolbarDemo'
+                , title: '商品数据表'
+                , totalRow: true
+                , cols: [[
+                    { type: 'checkbox', fixed: 'left' }
+                    , { field: 'goodsId', title: 'ID',fixed: 'left', sort: true }
+                    , { field: 'goodsName', title: '商品名'}
+                    , { field: 'priceWholesale', title: '批发价', sort: true }
+                    , { field: 'priceRetail', title: '零售价', sort: true }
+                    , { fixed: 'right', title: '操作', toolbar: '#barDemo' }
+                ]]
+                , page: true
+            });
+
+            //工具栏事件
+            table.on('toolbar(test)', function (obj) {
+                var checkStatus = table.checkStatus(obj.config.id);
+                switch (obj.event) {
+                    case 'getCheckData':
+                        var data = checkStatus.data;
+                        layer.alert(JSON.stringify(data));
+                        break;
+                    case 'getCheckLength':
+                        var data = checkStatus.data;
+                        layer.msg('选中了：' + data.length + ' 个');
+                        break;
+                    case 'isAll':
+                        layer.msg(checkStatus.isAll ? '全选' : '未全选')
+                        break;
+                }
+                ;
+            });
+
+            //监听工具条
+            table.on('tool(test)', function (obj) {
+                layer.confirm('真的删除么', function (index) {
+                    var data = obj.data.goodsId;
+                    console.log(JSON.stringify(data));
+                    $.ajax({
+                        type: "POST",
+                        url: '/goods/delete',  //从数据库查询返回的是个list
+                        dataType: "json",
+                        async: false,
+                        cache: false,
+                        data: {
+                            "goodsId": data
+                        },
+                        success: function (flag) {
+                            if (flag) {
+                                layer.msg('成功删除商品', { icon: 1 });
+                                setTimeout('window.location.reload()', 1000);
+                            } else {
+                                layer.msg('删除商品失败', { icon: 2 });
+                            }
+                        },
+                        error: function () {
+                            alert("发生错误！");
+                        }
+                    })
+                    return false;
+                });
+            });
+        });
+    </script>
+
+</body>
+
+</html>

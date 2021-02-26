@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>销售管理系统</title>
+    <link rel="stylesheet" href="../lib/layui-v2.5.5/css/layui.css" media="all">
+    <script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <script src="../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+    <script src="../lib/jq-module/jquery.particleground.min.js" charset="utf-8"></script>
+    <script>
+        var orderList = [];
+        var srcorderList = [];
+        var customerList = [];
+        var goodsList = [];
+        var selectedCustomer;
+        var selectedGood;
+
+        var value1;
+        var value2;
+        var value3;
+        var value4;
+        var value5;
+        var value6;
+    </script>
+    <script>
+        function loadinfo() {
+            orderList = [];
+            $.ajax({
+                type: "POST",
+                url: '/order/orderList',  //从数据库查询返回的是个list
+                dataType: "json",
+                async: false,
+                cache: false,
+                success: function (data) {
+                    orderList = data;
+                }
+            })
+            var len = orderList.length;
+            for (var i = 0; i < len; i++) {
+                if (orderList[i].status - 2 >= 0)
+                    orderList[i].check = "已审核";
+                else
+                    orderList[i].check = "未审核";
+                if (orderList[i].status % 2 == 0)
+                    orderList[i].status = "批发";
+                else if (orderList[i].status % 2 == 1)
+                    orderList[i].status = "零售";
+            }
+            var newOrderList = [];
+            for (var i = 0; i < len; i++) {
+                if (orderList[i].check == "已审核")
+                    newOrderList.push(orderList[i]);
+            }
+            orderList = newOrderList;
+        }
+        loadinfo();
+    </script>
+    <script>
+        $.ajax({
+            type: "POST",
+            url: '/customer/customerList',
+            dataType: "json",
+            data: {
+                "page": 1,
+                "limit": 100
+            },
+            async: false,
+            cache: false,
+            success: function (data) {
+                customerList = data.data;
+            }
+        })
+        $.ajax({
+            type: "POST",
+            url: '/goods/goodsList',
+            dataType: "json",
+            data: {
+                "page": 1,
+                "limit": 100
+            },
+            async: false,
+            cache: false,
+            success: function (data) {
+                goodsList = data.data;
+            }
+        })
+    </script>
+    <script>
+        function loadtable() {
+            layui.use('table', function () {
+                var table = layui.table;
+                //第一个实例
+                table.render({
+                    elem: '#test'
+                    , toolbar: '#toolbarDemo'
+                    , title: '订单数据表'
+                    , totalRow: true
+                    , data: orderList
+                    , cols: [[
+                        { type: 'checkbox', fixed: 'left' }
+                        , { field: 'orderId', title: '订单ID', fixed: 'left', sort: true }
+                        , { field: 'customerId', title: '客户ID', }
+                        , { field: 'price', title: '订单金额', sort: true }
+                        , { field: 'status', title: '订单类型', sort: true }
+                        , { field: 'check', title: '审核状态', sort: true }
+                        , { field: 'warehouseId', title: '出货仓库', sort: true }
+                        , { field: 'createTime', title: '创建时间', sort: true }
+                        , { fixed: 'right', title: '操作', toolbar: '#barDemo' }
+                    ]]
+                });
+            });
+        }
+        loadtable();
+    </script>
+</head>
+
+<body>
+
+    <fieldset class="layui-elem-field layui-field-title" style="margin-top: 20px;">
+        <legend>销售统计</legend>
+    </fieldset>
+    <form class="layui-form" type="form" action="">
+        <div class="layui-form-item">
+            <label class="layui-form-label">选择客户</label>
+            <div class="layui-input-block">
+                <select id="customerName" name="customerName" lay-verify="required" lay-search lay-filter="cn"
+                    class="select">
+                    <option value=""></option>
+                </select>
+            </div>
+            <label class="layui-form-label">选择商品</label>
+            <div class="layui-input-block">
+                <select id="goodsName" name="goodsName" lay-verify="required" lay-search lay-filter="gn" class="select">
+                    <option value=""></option>
+                </select>
+            </div>
+            <button class="layui-btn" data-type="reload" id="searchCustomer" style="float: right;">搜索</button>
+        </div>
+        <script>
+            var len = customerList.length;
+            for (var i = 0; i < len; i++) {
+                $('#customerName').append(new Option(customerList[i].customerName, i));
+            }
+            len = goodsList.length;
+            for (var i = 0; i < len; i++) {
+                $('#goodsName').append(new Option(goodsList[i].goodsName, i));
+            }
+        </script>
+    </form>
+    <div class="layui-card-body layui-text">
+        <table class="layui-table">
+            <colgroup>
+                <col width="300">
+                <col>
+            </colgroup>
+            <tbody>
+                <tr>
+                    <td>选定客户订单总数</td>
+                    <td id="tdfirst">
+                    </td>
+                    <script>
+                        document.getElementById("tdfirst").innerHTML = "请选择客户";
+                    </script>
+                </tr>
+                <tr>
+                    <td>选定客户订单总金额</td>
+                    <td id="tdsecond"></td>
+                    <script>
+                        document.getElementById("tdsecond").innerHTML = "请选择客户";
+                    </script>
+                </tr>
+                <tr>
+                    <td>包含选定货品的订单总数</td>
+                    <td id="tdthird"></td>
+                    <script>
+                        document.getElementById("tdthird").innerHTML = "请选择货品";
+                    </script>
+                </tr>
+                <tr>
+                    <td>选定货品销售总量</td>
+                    <td id="tdfourth"></td>
+                    <script>
+                        document.getElementById("tdfourth").innerHTML = "请选择货品";
+                    </script>
+                </tr>
+                <tr>
+                    <td>选定客户购买选定商品的订单数</td>
+                    <td id="tdfivth"></td>
+                    <script>
+                        document.getElementById("tdfivth").innerHTML = "请选择客户";
+                    </script>
+                </tr>
+                <tr>
+                    <td>选定客户购买选定商品的数量</td>
+                    <td id="tdsixth"></td>
+                    <script>
+                        document.getElementById("tdsixth").innerHTML = "请选择客户";
+                    </script>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <table class="layui-hide" id="test" lay-filter="test"></table>
+
+    <script type="text/html" id="toolbarDemo">
+        <div class="layui-btn-container">
+            <button class="layui-btn layui-btn-sm" lay-event="getCheckData">获取选中行数据</button>
+            <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button>
+            <button class="layui-btn layui-btn-danger" lay-event="refund">退款</button>
+        </div>
+    </script>
+    </script>
+    <script type="text/html" id="barDemo">
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    </script>
+
+    <script>
+        layui.use(['table', 'form'], function () {
+            var table = layui.table;
+            var form = layui.form;
+            //工具栏事件
+            table.on('toolbar(test)', function (obj) {
+                var checkStatus = table.checkStatus(obj.config.id);
+                switch (obj.event) {
+                    case 'getCheckData':
+                        var data = checkStatus.data;
+                        layer.alert(JSON.stringify(data));
+                        break;
+                    case 'refund':
+                        break;
+                    case 'getCheckLength':
+                        var data = checkStatus.data;
+                        layer.msg('选中了：' + data.length + ' 个');
+
+                        $.ajax({
+                            async: true,
+                            type: 'post',
+                            url: '/order/check',
+                            contentType: "application/json",
+                            data: JSON.stringify(data),
+                            dataType: "json",
+                            success: function (flag) {
+                                if (flag) {
+                                    alert("成功！");
+                                    location.reload();
+                                } else {
+                                    alert("失败！")
+                                }
+                            },
+                            error: function () {
+                                alert("添加错误！");
+                            }
+                        });
+                        return false;
+                        break;
+                };
+            });
+
+            table.on('tool(test)', function (obj) {
+                layer.confirm('真的删除么', function (index) {
+                    var data = obj.data.orderId;
+                    $.ajax({
+                        type: "POST",
+                        url: '/order/delete',  //从数据库查询返回的是个list
+                        dataType: "json",
+                        async: false,
+                        cache: false,
+                        data: {
+                            "orderId": data
+                        },
+                        success: function (flag) {
+                            if (flag) {
+                                layer.msg('成功删除订单信息', { icon: 1 });
+                                setTimeout('window.location.reload()', 1000);
+                            } else {
+                                layer.msg('删除订单信息失败', { icon: 2 });
+                            }
+                        },
+                        error: function () {
+                            alert("发生错误！");
+                        }
+                    })
+                    return false;
+                });
+            });
+
+            form.on('select(cn)', function (data) {
+                selectedCustomer = customerList[data.value];
+                form.render('select');
+            });
+            form.on('select(gn)', function (data) {
+                selectedGood = goodsList[data.value];
+                form.render('select');
+            });
+        });
+        $("#searchCustomer").click(function () {
+            var cus_orderlist = [];
+            var good_orderlist = [];
+
+            if (typeof (selectedCustomer) == "undefined") {
+                console.log("this is an undefined customer");
+                value1 = "请选择客户";
+                value2 = "请选择客户";
+                value5 = "请选择客户";
+                value6 = "请选择客户";
+                cus_orderlist = orderList;
+            }
+            else {
+                value2 = 0;
+                var cid = selectedCustomer.customerId;
+                var lenoflist = orderList.length;
+                for (var i = 0; i < lenoflist; i++) {
+                    if (orderList[i].customerId == cid) {
+                        cus_orderlist.push(orderList[i]);
+                        value2 += orderList[i].price;
+                    }
+                }
+                value1 = cus_orderlist.length;
+            }
+            if (typeof (selectedGood) == "undefined") {
+                console.log("this is an undefined good");
+                value3 = "请选择商品";
+                value4 = "请选择商品";
+                if (value5 != "请选择客户")
+                    value5 = "请选择商品";
+                if (value6 != "请选择客户")
+                    value6 = "请选择商品";
+                good_orderlist = cus_orderlist;
+            }
+            else {
+                value4 = 0;
+                value3 = 0;
+                var gid = selectedGood.goodsId;
+                var lenoflist = orderList.length;
+                for (var i = 0; i < lenoflist; i++) {
+                    var str = orderList[i].goodsList.split("-");
+                    var lenofstr = str.length / 2;
+                    for (var j = 0; j < lenofstr; j++) {
+                        if (str[2 * j] == gid) {
+                            value4 += parseInt(str[2 * j + 1]);
+                            value3++;
+                            break;
+                        }
+                    }
+                }
+
+                value5 = 0;
+                value6 = 0;
+                lenoflist = cus_orderlist.length;
+                for (var i = 0; i < lenoflist; i++) {
+                    var str = cus_orderlist[i].goodsList.split("-");
+                    var lenofstr = str.length / 2;
+                    for (var j = 0; j < lenofstr; j++) {
+                        if (str[2 * j] == gid) {
+                            good_orderlist.push(cus_orderlist[i]);
+                            value6 += parseInt(str[2 * j + 1]);
+                            value5++;
+                            break;
+                        }
+                    }
+                }
+            }
+            orderList = good_orderlist;
+            loadtable();
+            loadinfo();//重新获取所有的订单信息
+            document.getElementById("tdfirst").innerHTML = value1;
+            document.getElementById("tdsecond").innerHTML = value2;
+            document.getElementById("tdthird").innerHTML = value3;
+            document.getElementById("tdfourth").innerHTML = value4;
+            document.getElementById("tdfivth").innerHTML = value5;
+            document.getElementById("tdsixth").innerHTML = value6;
+            return false;
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>仓库列表</title>
+    <link rel="stylesheet" href="../lib/layui-v2.5.5/css/layui.css" media="all">
+    <script>
+        var goodsList = [];//待提交的商品列表信息
+        var hasWhList = false;
+
+        var whGoodsList = [];
+        var totalwhGoodsList = [];
+
+        var selectedWarehouse = -1;
+        var haschange = -1;
+        var selectedgood = -1;
+        var warehouseList = [];
+    </script>
+    <script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <script src="../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+    <script src="../lib/jq-module/jquery.particleground.min.js" charset="utf-8"></script>
+    <script>
+        $.ajax({
+            type: "POST",
+            url: '/warehouse/warehouseList',  //从数据库查询返回的是个list
+            dataType: "json",
+            async: false,
+            cache: false,
+            success: function (data) {
+                warehouseList = data.data;
+            }
+        })
+        $.ajax({
+            type: "POST",
+            url: '/warehouse/totalGoodsList',
+            //从数据库查询返回所有仓库的所有商品的库存总量
+            dataType: "json",
+            async: false,
+            cache: false,
+            success: function (data) {
+                whGoodsList = data.data;
+                for (var i = 0; i < whGoodsList.length; i++) {
+                    totalwhGoodsList[i] = whGoodsList[i];
+                }
+            }
+        })
+    </script>
+
+</head>
+
+<body>
+
+
+    <table class="layui-hide" id="test" lay-filter="test"></table>
+
+    <script type="text/html" id="toolbarDemo">
+        <div class="layui-btn-container">
+            <button class="layui-btn layui-btn-sm" lay-event="getCheckData">获取选中行数据</button>
+            <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button>
+            <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button>
+        </div>
+    </script>
+    <script type="text/html" id="barDemo">
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    </script>
+
+
+    <div class="layui-col-md7">
+        <form class="layui-form" action="" lay-filter="add">
+            <div class="layui-card">
+                <div class="layui-card-header">选择仓库以查看其库存</div>
+                <div class="layui-card-body">
+                    <div class="layui-form-item" style="background-color: #eab710;">
+                        <label class="layui-form-label">仓库id</label>
+                        <div class="layui-input-block">
+                            <select id="whList" name="whList" lay-verify="required" lay-search lay-filter="whl"
+                                class="select">
+                                <option value=""></option>
+                            </select>
+                        </div>
+                        <script>
+                            $('#whList').empty();
+                            $('#whList').append(new Option("仓库总和", 1));
+                            var len = warehouseList.length;
+                            for (var i = 0; i < len; i++) {
+                                $('#whList').append(new Option(warehouseList[i].warehouseId, warehouseList[i].warehouseId + 1));
+                            }
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="layui-col-md3">
+        <div class="layui-card">
+            <button id="newWh" class="layui-btn layui-btn-normal" data-type="test2">新增仓库</button>
+            <button id="deleteWh" class="layui-btn layui-btn-danger">删除此仓库</button>
+        </div>
+    </div>
+
+
+    <script>
+        layui.use('table', function () {
+            var table = layui.table;
+
+            table.render({
+                //重新渲染表格
+                elem: '#test'
+                , height: 400
+                , toolbar: '#toolbarDemo'
+                /*,url: '/demo/table/user/' //数据接口*/
+                , page: true //开启分页
+                , totalRow: true
+                , cols: [[ //表头
+                    { type: 'checkbox', fixed: 'left' }
+                    , { field: 'goodsId', title: '货物ID', sort: true, fixed: 'left' }
+                    , { field: 'goodsName', title: '货物名称', fixed: 'left' }
+                    , { field: 'priceIn', title: '货品进价', fixed: 'left' }
+                    , { field: 'priceRetail', title: '货品单价', fixed: 'left' }
+                    , { field: 'quantityInWh', title: '数量', fixed: 'left' }
+                ]]
+                , data: whGoodsList
+            });
+
+            //工具栏事件
+            table.on('toolbar(test)', function (obj) {
+                var checkStatus = table.checkStatus(obj.config.id);
+                switch (obj.event) {
+                    case 'getCheckData':
+                        var data = checkStatus.data;
+                        layer.alert(JSON.stringify(data));
+                        break;
+                    case 'getCheckLength':
+                        var data = checkStatus.data;
+                        layer.msg('选中了：' + data.length + ' 个');
+                        break;
+                    case 'isAll':
+                        layer.msg(checkStatus.isAll ? '全选' : '未全选')
+                        break;
+                }
+                ;
+            });
+
+            //监听工具条
+            table.on('tool(test)', function (obj) {
+                layer.confirm('真的删除么', function (index) {
+                    obj.del();
+                    layer.close(index);
+                });
+            });
+        });
+
+        layui.use(['form', 'table'], function () {
+            var form = layui.form;
+            var table = layui.table;
+            form.on('select(whl)', function (data) {
+                selectedWarehouse = data.value - 1;
+                if (selectedWarehouse == 0) {
+                    whGoodsList = totalwhGoodsList;
+                }
+                else if (selectedWarehouse != -1) {
+                    $.ajax({
+                        type: "GET",
+                        url: '/warehouse/goodsList',  //从数据库查询返回的是个list
+                        dataType: "json",
+                        data: {
+                            "warehouseId": selectedWarehouse
+                        },
+                        async: false,
+                        cache: false,
+                        success: function (data) {
+                            whGoodsList = [];
+                            $.each(data.data, function (index, item) {
+                                var goodVOobj = { "goodsId": item.goodsId, "goodsName": item.goodsName, "priceIn": item.priceIn, "priceRetail": item.priceRetail, "quantityInWh": item.quantityInWh };
+                                whGoodsList.push(goodVOobj);
+                            });
+                            form.render();
+                        }
+                    })
+                }
+
+                table.render({//重新渲染表格
+                    elem: '#test'
+                    , height: 400
+                    , toolbar: '#toolbarDemo'
+                    /*,url: '/demo/table/user/' //数据接口*/
+                    , page: true //开启分页
+                    , totalRow: true
+                    , cols: [[ //表头
+                        { type: 'checkbox', fixed: 'left' }
+                        , { field: 'goodsId', title: '货物ID', sort: true, fixed: 'left' }
+                        , { field: 'goodsName', title: '货物名称', fixed: 'left' }
+                        , { field: 'priceIn', title: '货品进价', fixed: 'left' }
+                        , { field: 'priceRetail', title: '货品单价', fixed: 'left' }
+                        , { field: 'quantityInWh', title: '数量', fixed: 'left' }
+                    ]]
+                    , data: whGoodsList
+                });
+            });
+
+        });
+
+        $('#newWh').on('click', function () {
+            layer.confirm('确认新增仓库？', {
+                btn: ['确定', '取消'] //按钮
+            }, function () {
+                $.ajax({
+                    type: "POST",
+                    url: '/warehouse/add',  //从数据库查询返回的是个list
+                    dataType: "json",
+                    async: false,
+                    cache: false,
+                    success: function (flag) {
+                        if (flag) {
+                            layer.msg('成功新增仓库', { icon: 1 });
+                            setTimeout('window.location.reload()', 1000);
+                        } else {
+                            layer.msg('新增仓库失败', { icon: 2 });
+                        }
+                    },
+                    error: function () {
+                        alert("发生错误！");
+                    }
+                });
+            });
+        });
+
+        $('#deleteWh').on('click', function () {
+            if (selectedWarehouse == -1) {
+                layer.alert("错误，尚未选择仓库", { icon: 2 });
+                return false;
+            }
+            layer.confirm('确认删除当前仓库？', {
+                btn: ['确定', '取消'] //按钮
+            }, function () {
+                console.log("运行到这里");
+                $.ajax({
+                    type: "POST",
+                    url: '/warehouse/delete',  //从数据库查询返回的是个list
+                    dataType: "json",
+                    data: { "warehouseId": selectedWarehouse },
+                    async: false,
+                    cache: false,
+                    success: function (flag) {
+                        if (flag) {
+                            layer.msg('成功删除仓库', { icon: 1 });
+                            setTimeout('window.location.reload()', 1000);
+                        } else {
+                            layer.msg('删除仓库失败', { icon: 2 });
+                        }
+                    },
+                    error: function () {
+                        alert("发生错误！");
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+
+</html>

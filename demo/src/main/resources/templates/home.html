@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+
+<head>
+    <meta charset="UTF-8">
+    <title>销售管理系统</title>
+    <link rel="stylesheet" href="../lib/layui-v2.5.5/css/layui.css" media="all">
+    <script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <script>
+        function change(title) {
+            $('iframe').attr('src', title + ".html");
+        }
+    </script>
+</head>
+
+<body class="layui-layout-body">
+    <div class="layui-layout layui-layout-admin">
+        <div class="layui-header">
+            <div class="layui-logo">商品信息管理系统</div>
+            <!-- 头部区域（可配合layui已有的水平导航） -->
+            <ul class="layui-nav layui-layout-right">
+                <img src="//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg"
+                    class="layui-nav-img">
+                <a href="javascript:;">
+                    <cite th:text="${session.username}"></cite>
+                </a>
+                <li class="layui-nav-item"><a style="cursor:pointer;text-decoration:none;" onclick="out()">退出登录</a></li>
+            </ul>
+        </div>
+
+        <div class="layui-side layui-bg-black">
+            <div class="layui-side-scroll">
+                <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+                <ul class="layui-nav layui-nav-tree" lay-filter="test">
+                    <li class="layui-nav-item layui-nav-itemed">
+                        <a class="" href="javascript:;">所有商品</a>
+                        <dl class="layui-nav-child">
+                            <dd class="layui-this" id="permission001"><a id="goodsList"
+                                    onclick="change('goodsList')">&nbsp;&nbsp;&nbsp;商品列表</a>
+                            </dd>
+                            <dd><a href="javascript:;" onclick="change('addGoods')">&nbsp;&nbsp;&nbsp;添加商品</a></dd>
+                            <dd><a href="javascript:;" onclick="change('searchGoods')">&nbsp;&nbsp;&nbsp;查询商品</a></dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item">
+                        <a class="" href="javascript:;">客户信息</a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="javascript:;" onclick="change('customerList')">&nbsp;&nbsp;&nbsp;客户列表</a></dd>
+                            <dd><a href="javascript:;" onclick="change('addCustomer')">&nbsp;&nbsp;&nbsp;添加客户</a></dd>
+                            <dd><a href="javascript:;" onclick="change('searchCustomer')">&nbsp;&nbsp;&nbsp;查询客户</a>
+                            </dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item">
+                        <a class="" href="javascript:;">业务管理</a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="javascript:;" onclick="change('placeOrder')">&nbsp;&nbsp;&nbsp;下单</a></dd>
+                            <dd><a href="javascript:;" onclick="change('checkOrder')">&nbsp;&nbsp;&nbsp;审核订单</a></dd>
+                            <dd><a href="javascript:;" onclick="change('orderList')">&nbsp;&nbsp;&nbsp;查询订单</a></dd>
+                        </dl>
+                    </li>
+                    <li class="layui-nav-item">
+                        <a class="" href="javascript:;">库存管理</a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="javascript:;" onclick="change('warehouseList')">&nbsp;&nbsp;&nbsp;库存列表</a></dd>
+                            <dd><a href="javascript:;" onclick="change('stock')">&nbsp;&nbsp;&nbsp;进货</a></dd>
+                            <dd><a href="javascript:;" onclick="change('transfer')">&nbsp;&nbsp;&nbsp;调拨货品</a></dd>
+                        </dl>
+                    </li>
+
+                    <li class="layui-nav-item">
+                        <a class="" href="javascript:;">用户管理</a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="javascript:;" onclick="change('userList')">&nbsp;&nbsp;&nbsp;用户列表</a></dd>
+                            <dd><a href="javascript:;" onclick="change('searchUser')">&nbsp;&nbsp;&nbsp;用户查询</a></dd>
+                            <dd><a href="javascript:;" onclick="change('roleList')">&nbsp;&nbsp;&nbsp;角色列表</a></dd>
+                        </dl>
+                    </li>
+
+                    <li class="layui-nav-item">
+                        <a class="" href="javascript:;">统计查询</a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="javascript:;" onclick="change('warehouseStatistic')">&nbsp;&nbsp;&nbsp;库存统计</a>
+                            </dd>
+                            <dd><a href="javascript:;" onclick="change('saleStatistic')">&nbsp;&nbsp;&nbsp;销售统计</a></dd>
+                        </dl>
+                    </li>
+
+                    <li class="layui-nav-item">
+                        <a class="" href="javascript:;" onclick="change('turnover')">收银台</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="layui-body">
+            <!-- 内容主体区域 -->
+            <div style="padding: 15px;">
+                <iframe src="goodsList.html" frameborder="0" id="demoAdmin"
+                    style="width: 100%; height: 600px;"></iframe>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- <script>
+        document.getElementById("permission001").hidden=true;
+    </script> -->
+
+    <script src="../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+    <script src="../lib/jq-module/jquery.particleground.min.js" charset="utf-8"></script>
+    <script>
+        //JavaScript代码区域
+        layui.use('element', function () {
+            var element = layui.element;
+
+        });
+
+        function out() {
+            var result = confirm("确定要退出吗？");
+            if (result) {
+                location.href = "/logout";
+            }
+        }
+
+    </script>
+</body>
+
+</html>

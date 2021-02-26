@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>销售管理系统</title>
+    <link rel="stylesheet" href="../lib/layui-v2.5.5/css/layui.css" media="all">
+    <script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <script src="../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+    <script src="../lib/jq-module/jquery.particleground.min.js" charset="utf-8"></script>
+</head>
+
+<body>
+<div class="layui-col-md7">
+    <table class="layui-hide" id="test" lay-filter="test"></table>
+</div>
+
+<div class="layui-col-md3">
+    <form class="layui-form" action="">
+        <div class="layui-form-item">
+            <label class="layui-form-label">拥有权限</label>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block" id="checks">
+                <input cid="1" type="radio" name="codes" value="manager" title="经理">
+                <input cid="1" type="radio" name="codes" value="shopowner" title="店长">
+                <input cid="1" type="radio" name="codes" value="clerk" title="店员">
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="submit" class="layui-btn" lay-submit="" lay-filter="demo1">立即提交</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="codes">权限信息</button>
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button>
+        <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button>
+    </div>
+</script>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<script>
+    layui.use('table', function () {
+        var table = layui.table;
+
+        table.render({
+            elem: '#test'
+            , url: '/user/userList'
+            , toolbar: '#toolbarDemo'
+            , title: '用户数据表'
+            , totalRow: true
+            , cols: [[
+                { type: 'checkbox', fixed: 'left' }
+                , { field: 'accountId', title: 'ID', width: 200, fixed: 'left', sort: true }
+                , { field: 'accountName', title: '名称', width: 200 }
+                , { field: 'power', title: '角色', width: 200, }
+                , { fixed: 'right', title: '操作', toolbar: '#barDemo' }
+            ]]
+            , page: true
+        });
+
+        //工具栏事件
+        table.on('toolbar(test)', function (obj) {
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch (obj.event) {
+                case 'codes':
+                    var data0 = checkStatus.data;
+                    //console.log(JSON.stringify(data));
+                    if(data0.length>1){
+                        layer.alert("只能选择一个数据");
+                        break;
+                    }
+                    else if(data0.length<=0){
+                        layer.alert("请选择一个数据");
+                        break;
+                    }
+                    var data = JSON.stringify(data0);
+                    let strings = data.split("\"");
+                    //alert(strings[9]);
+                    var str = strings[9];
+                    layui.use('form',function () {
+                        var form = layui.form;
+                        $("[cid='1']").prop("checked", false);
+                        form.render();
+                        switch (str) {
+                            case "经理":
+                                $("[title= '经理']").prop("checked",true);
+                                break;
+                            case "店长":
+                                $("[title= '店长']").prop("checked",true);
+                                break;
+                            case "店员":
+                                $("[title= '店员']").prop("checked",true);
+                                break;
+                            default:
+                                alert("此用户没有职位");
+                                break;
+
+                        }
+                        form.render();
+                    })
+
+                    break;
+
+
+                case 'getCheckLength':
+                    var data = checkStatus.data;
+                    layer.msg('选中了：' + data.length + ' 个');
+                    break;
+                case 'isAll':
+                    layer.msg(checkStatus.isAll ? '全选' : '未全选')
+                    break;
+            }
+
+            layui.use(['form'], function(){
+                var form = layui.form
+                    ,layer = layui.layer
+                //监听提交
+                form.on('submit(demo1)', function(data){
+                    data = data.field;
+                    var data0 = checkStatus.data;
+                    var data1 = JSON.stringify(data0);
+                    //alert($("[value='manager']").prop("checked"));
+                    //alert($("[value='shopowner']").prop("checked"));
+                    //alert($("[value='clerk']").prop("checked"));
+
+                    var code;
+                    if($("[value='manager']").prop("checked")){
+                        alert("已设置为经理");
+                        code= "经理";
+                    }
+                    if($("[value='shopowner']").prop("checked")){
+                        alert("已设置为店长");
+                        code= "店长";
+                    }
+                    if($("[value='clerk']").prop("checked"))
+                    {
+                        alert("已设置为店员");
+                        code= "店员";
+                    }
+
+
+                    //alert(data1);
+                    //[{"id":2,"name":"店长","code":"shopowner","intro":"权力较大"}]
+                    let strings = data1.split("\"");
+                    var codes = JSON.stringify(obj);
+                    var name = strings[5];
+                    //alert(name);
+                    $.ajax({
+                        async:false,
+                        type: 'GET',
+                        url: '/user/changeRole',
+                        dataType: 'json',
+                        data: {name: name, code:code},
+                        success:function (flag) {
+                            if(flag){
+                                console.log(code);
+                                alert("添加成功！");
+                                location.reload();
+                            } else {
+                                alert("添加失败！")
+                            }
+                        },
+                        error:function () {
+                            alert("添加错误！");
+                        }
+                    });
+                    return false;
+                });
+            });
+
+        });
+
+        //监听工具条
+        table.on('tool(test)', function (obj) {
+            layer.confirm('真的删除么', function (index) {
+                var data = obj.data.accountId;
+                console.log(JSON.stringify(data));
+                $.ajax({
+                    type: "POST",
+                    url: '/user/delete',  //从数据库查询返回的是个list
+                    dataType: "json",
+                    async: false,
+                    cache: false,
+                    data: {
+                        "accountId": data
+                    },
+                    success: function (flag) {
+                        if (flag) {
+                            layer.msg('成功删除客户信息', { icon: 1 });
+                            setTimeout('window.location.reload()', 1000);
+                        } else {
+                            layer.msg('删除客户信息失败', { icon: 2 });
+                        }
+                    },
+                    error: function () {
+                        alert("发生错误！");
+                    }
+                })
+                return false;
+            });
+        });
+    });
+</script>
+
+</body>
+
+</html>

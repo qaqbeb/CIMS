@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>销售管理系统</title>
+    <link rel="stylesheet" href="../lib/layui-v2.5.5/css/layui.css" media="all">
+    <script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <script src="../lib/layui-v2.5.5/layui.js" charset="utf-8"></script>
+    <script src="../lib/jq-module/jquery.particleground.min.js" charset="utf-8"></script>
+
+</head>
+
+<body>
+
+<div class="layui-col-md7">
+    <table class="layui-hide" id="test" lay-filter="test"></table>
+</div>
+
+<div class="layui-col-md3">
+    <form class="layui-form" action="">
+        <div class="layui-form-item">
+            <label class="layui-form-label">拥有权限</label>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block" id="checks">
+                <input cid="1" type="checkbox" name="gList" lay-skin="primary" title="商品列表">
+                <input cid="1" type="checkbox" name="addG" lay-skin="primary" title="添加商品">
+                <input cid="1" type="checkbox" name="searchG" lay-skin="primary" title="查询商品">
+                <input cid="1" type="checkbox" name="cList" lay-skin="primary" title="客户列表">
+                <input cid="1" type="checkbox" name="addC" lay-skin="primary" title="添加客户">
+                <input cid="1" type="checkbox" name="searchC" lay-skin="primary" title="查询客户">
+
+                <input cid="1" type="checkbox" name="checkO" lay-skin="primary" title="审核订单">
+                <input cid="1" type="checkbox" name="placeO" lay-skin="primary" title="下单">
+                <input cid="1" type="checkbox" name="oList" lay-skin="primary" title="查询订单">
+                <input cid="1" type="checkbox" name="wList" lay-skin="primary" title="库存列表">
+
+                <input cid="1" type="checkbox" name="transfer" lay-skin="primary" title="调拨货品">
+                <input cid="1" type="checkbox" name="stock" lay-skin="primary" title="进货">
+                <input cid="1" type="checkbox" name="wgList" lay-skin="primary" title="库存记录">
+                <input cid="1" type="checkbox" name="uList" lay-skin="primary" title="用户列表">
+                <input cid="1" type="checkbox" name="searchU" lay-skin="primary" title="用户查询">
+                <input cid="1" type="checkbox" name="rList" lay-skin="primary" title="角色查询">
+                <!--<input cid="1" type="checkbox" name="addR" lay-skin="primary" title="添加角色">-->
+            </div>
+        </div>
+
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="submit" class="layui-btn" lay-submit="" lay-filter="demo1">立即提交</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="codes">权限信息</button>
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button>
+        <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button>
+    </div>
+</script>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del" id="del">删除</a>
+</script>
+<script>
+
+    layui.use(['table', 'form'], function () {
+        var table = layui.table;
+        var form = layui.form;
+        table.render({
+            elem: '#test'
+            , url: '/role/roleList'
+            , toolbar: '#toolbarDemo'
+            , title: '商品数据表'
+            , totalRow: true
+            , cols: [[
+                {type: 'checkbox', fixed: 'left'}
+                , {field: 'id', title: 'ID', fixed: 'left', sort: true}
+                , {field: 'name', title: '角色'}
+                , {field: 'code', title: '权限描述'}
+                , {field: 'intro', title: '角色描述',}
+                , {fixed: 'right', title: '操作', toolbar: '#barDemo'}
+            ]]
+            , page: true
+        });
+
+        //工具栏事件
+        table.on('toolbar(test)', function (obj) {
+            var checkStatus = table.checkStatus(obj.config.id);
+            switch (obj.event) {
+                case 'codes':
+                    var data0 = checkStatus.data;
+                    //console.log(JSON.stringify(data));
+                    if (data0.length > 1) {
+                        layer.alert("只能选择一个数据");
+                        break;
+                    } else if (data0.length <= 0) {
+                        layer.alert("请选择一个数据");
+                        break;
+                    }
+                    var data = JSON.stringify(data0);
+                    $.ajax({
+                        type: "POST",
+                        url: '/role/perms',  //从数据库查询返回的是个list
+                        dataType: "json",
+                        async: false,
+                        cache: false,
+                        data: {
+                            "data": data
+                        },
+                        success: function (res) {
+
+                            layui.use('form', function () {
+                                var form = layui.form;
+                                $("[cid='1']").prop("checked", false);
+                                form.render();
+                                //console.log(res);
+                                var s = res.toString();
+                                var strings = s.split(",");
+                                let elementById = document.getElementById("checks");
+                                let childNodes = elementById.childNodes;
+                                for (i = 0; i < strings.length; i++) {
+                                    var str = strings[i];
+                                    switch (str) {
+                                        case "商品列表":
+                                            $("[title= '商品列表']").prop("checked", true);
+                                            break;
+                                        case "添加商品":
+                                            $("[title= '添加商品']").prop("checked", true);
+                                            break;
+                                        case "查询商品":
+                                            $("[title= '查询商品']").prop("checked", true);
+                                            break;
+                                        case "客户列表":
+                                            $("[title= '客户列表']").prop("checked", true);
+                                            break;
+                                        case "添加客户":
+                                            $("[title= '添加客户']").prop("checked", true);
+                                            break;
+                                        case "查询客户":
+                                            $("[title= '查询客户']").prop("checked", true);
+                                            break;
+                                        case "审核订单":
+                                            $("[title= '审核订单']").prop("checked", true);
+                                            break;
+                                        case "下单":
+                                            $("[title= '下单']").prop("checked", true);
+                                            break;
+                                        case "查询订单":
+                                            $("[title= '查询订单']").prop("checked", true);
+                                            break;
+                                        case "库存列表":
+                                            $("[title= '库存列表']").prop("checked", true);
+                                            break;
+                                        case "调拨货品":
+                                            $("[title= '调拨货品']").prop("checked", true);
+                                            break;
+                                        case "进货":
+                                            $("[title= '进货']").prop("checked", true);
+                                            break;
+                                        case "库存记录":
+                                            $("[title= '库存记录']").prop("checked", true);
+                                            break;
+                                        case "用户列表":
+                                            $("[title= '用户列表']").prop("checked", true);
+                                            break;
+                                        case "用户查询":
+                                            $("[title= '用户查询']").prop("checked", true);
+                                            break;
+                                        case "角色查询":
+                                            $("[title= '角色查询']").prop("checked", true);
+                                            break;
+                                        case "添加角色":
+                                            $("[title= '添加角色']").prop("checked", true);
+                                            break;
+                                    }
+
+                                }
+
+
+                                form.render();
+                            })
+                        },
+                        error: function () {
+                            alert("发生错误！");
+                        }
+                    })
+                    break;
+                case 'getCheckLength':
+                    var data = checkStatus.data;
+                    layer.msg('选中了：' + data.length + ' 个');
+                    break;
+                case 'isAll':
+                    layer.msg(checkStatus.isAll ? '全选' : '未全选')
+                    break;
+            }
+
+            layui.use(['form'], function () {
+                var form = layui.form
+                    , layer = layui.layer
+                //监听提交
+                form.on('submit(demo1)', function (data) {
+                    data = data.field;
+                    var data0 = checkStatus.data;
+                    var data1 = JSON.stringify(data0);
+                    var codesMap = new Map();
+                    codesMap.set("商品列表", data.gList);
+                    codesMap.set("添加商品", data.addG);
+                    codesMap.set("查询商品", data.searchG);
+                    codesMap.set("客户列表", data.cList);
+                    codesMap.set("添加客户", data.addC);
+                    codesMap.set("查询客户", data.searchC);
+                    codesMap.set("下单", data.placeO);
+                    codesMap.set("审核订单", data.checkO);
+                    codesMap.set("查询订单", data.oList);
+                    codesMap.set("库存列表", data.wList);
+                    codesMap.set("进货", data.stock);
+                    codesMap.set("调拨货品", data.transfer);
+                    codesMap.set("库存记录", data.wgList);
+                    codesMap.set("用户列表", data.uList);
+                    codesMap.set("用户查询", data.searchU);
+                    codesMap.set("角色查询", data.rList);
+                    codesMap.set("添加角色", data.addR);
+
+
+                    let obj = Object.create(null);
+                    for (let [k, v] of codesMap) {
+                        obj[k] = v;
+                    }
+
+                    //alert(data1);
+                    //[{"id":2,"name":"店长","code":"shopowner","intro":"权力较大"}]
+                    let strings = data1.split("\"");
+                    var codes = JSON.stringify(obj);
+                    var name = strings[5];
+                    if(name=="经理"){
+                        alert("禁止修改！");
+                        return false;
+                    }
+                    $.ajax({
+                        async: false,
+                        type: 'GET',
+                        url: '/role/changePerms',
+                        dataType: 'json',
+                        data: {name: name, codes: codes},
+                        success: function (flag) {
+                            if (flag) {
+                                console.log(codes);
+                                alert("添加成功！");
+                                location.reload();
+                            } else {
+                                alert("添加失败！")
+                            }
+                        },
+                        error: function () {
+                            alert("添加错误！");
+                        }
+                    });
+                    return false;
+                });
+            });
+
+        });
+
+
+
+        //监听工具条
+        table.on('tool(test)', function (obj) {
+            layer.confirm('真的删除么', function (index) {
+                var name = obj.data.name;
+                if (name == "经理") {
+                    alert("禁止删除！");
+                    return false;
+                }
+                var data = obj.data.id;
+                console.log(JSON.stringify(data));
+                $.ajax({
+                    type: "POST",
+                    url: '/role/delete',  //从数据库查询返回的是个list
+                    dataType: "json",
+                    async: false,
+                    cache: false,
+                    data: {
+                        "id": data
+                    },
+                    success: function (flag) {
+                        if (flag) {
+                            layer.msg('成功删除', {icon: 1});
+                            setTimeout('window.location.reload()', 1000);
+                        } else {
+                            layer.msg('删除失败', {icon: 2});
+                        }
+                    },
+                    error: function () {
+                        alert("发生错误！");
+                    }
+                })
+                return false;
+            });
+
+
+        });
+    });
+</script>
+
+</body>
+
+</html>
